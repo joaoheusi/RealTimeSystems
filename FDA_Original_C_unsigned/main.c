@@ -5,14 +5,21 @@
 #include "pgmfiles.h"
 #include "diff2d.h"
 #include <x86intrin.h>
+#include "LUT.h"
+#include <time.h>
+
+
 
 
 #pragma intrinsic(__rdtsc)
-//gcc -o fda pgmtolist.c pgmfiles.c diff2d.c main.c -lm
+//gcc -o -msse2 fda pgmtolist.c pgmfiles.c diff2d.c main.c -lm
 
 void main (int argc, char **argv) {
-
+  
   unsigned __int64 maintime;
+  float maintime_time;
+  float time1;
+  float  lut_vector[255];
   char   row[80];
   float  **matrix;
   int i, j;
@@ -23,14 +30,21 @@ void main (int argc, char **argv) {
   eightBitPGMImage *PGMImage;
 
 
-
-  /* ---- read image name  ---- */
   
+  time1 = clock();
+      for(int i = 0;i<266;i++){
+        lut_vector[i] = (1 - exp ( -8 * 0.5 * exp((-pow(i,0.2)/8)/5)))/8;
+    }
+  printf("teste");
+  printf("Tempo Carregamento LUT: %f ms", clock()- time1);
+  maintime = __rdtsc();
+  maintime_time = clock();
+  /* ---- read image name  ---- */
   
   PGMImage = (eightBitPGMImage *) malloc(sizeof(eightBitPGMImage));
   
   
-
+  
   if (!argv[1])
   {
 	  printf("name of input PGM image file (with extender): ");
@@ -81,16 +95,13 @@ void main (int argc, char **argv) {
   
   
   //~ gets(row);  sscanf(row, "%f", &lambda);
-  lambda = 3;
-  //scanf("%f", &lambda);
-  //printf("number of iterations: ");
-  //~ gets(row);  sscanf(row, "%ld", &imax);
+  lambda = 4;
   imax = 8;
   //scanf("%ld", &imax);  
   for (i=1; i<=imax; i++)
     {
-      //printf("iteration number: %3ld \n", i);
-      diff2d (0.5, lambda, PGMImage->x, PGMImage->y, matrix); 
+      printf("iteration number: %3ld \n", i);
+      diff2d2 (0.5, lambda, PGMImage->x, PGMImage->y, matrix,lut_vector); 
     }
     
   /* ----- copy the Result Image to PGM Image/File structure ----- */
@@ -115,7 +126,7 @@ void main (int argc, char **argv) {
 
   
   /* ---- disallocate storage ---- */
-  maintime = __rdtsc();
+  
   for (i=0; i<PGMImage->x; i++)
   free(matrix[i]);
   free(matrix);
@@ -125,6 +136,7 @@ void main (int argc, char **argv) {
   
 
   printf("%I64d ticks3\n", __rdtsc() - maintime);
+  printf("%f ms\n",clock() - maintime_time);
   //printf("Tempo de execucao: %lf", ((double)maintime)); //conversão para double(maintime);
 }
 

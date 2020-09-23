@@ -2,53 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "diff2d.h"
+#include "LUT.h"
 
 
 /*--------------------------------------------------------------------------*/
 
-
-
-float * lut (){
-    float func[255];
-
-    for(int i = 0;i<266;i++){
-        func[i] = (1 - exp ( -4* exp(-((pow(i,0.2))/5))))/8;
-    }
-    return func;
-}
-
-
-
-
-
-
-float dco (float v,         /* value at one point */
-           float w,         /* value at the other point */
-           float lambda)    /* contrast parameter */
-
-/* diffusivity */
-
-{
-    float result = 0.0, temp_result = 0.0;
-
-    temp_result = (float)fabs(v-w);
-    temp_result = pow(temp_result,0.2);
-    temp_result = temp_result/lambda;
-    if(temp_result != 0.0){
-        temp_result = -(temp_result/5.0);
-    }
-    result = exp(temp_result);
-    //result = exp( - (pow(fabs(v-w),0.2)/lambda) / 5.0);
-
-    return (result);
-}
-
-
-/*--------------------------------------------------------------------------*/
-
-
-void diff2d
+void diff2d2
 
      (float    ht,        /* time step size, >0, e.g. 0.5 */
       float    lambda,    /* contrast parameter */
@@ -82,19 +41,11 @@ float   **g;                                      /* work copy of f */
 /* ---- allocate storage for g ---- */
 
 g = (float **) malloc ((nx+2) * sizeof(float *));
-if (g == NULL)
-   {
-     printf("not enough storage available\n");
-     exit(1);
-   }
+
 for (i=0; i<=nx+1; i++)
     {
       g[i] = (float *) malloc ((ny+2) * sizeof(float));
-      if (g[i] == NULL)
-         {
-           printf("not enough storage available\n");
-           exit(1);
-         }
+
     }
 
 
@@ -121,32 +72,30 @@ for (j=0; j<=ny+1; j++)
 
 
 /* ---- diffusive averaging ---- */
-
+int a;
 for (i=1; i<=nx; i++)
  for (j=1; j<=ny; j++)
 
      {
 
        /* calculate weights */
-       int a = fabs(g[i][j]- g[i  ][j+1]);
+       a = (int)fabs(g[i][j]- g[i  ][j+1]);
        qN  = lut_vector[a]; 
-       a = fabs(g[i][j]- g[i+1][j+1]);
+       a = (int)fabs(g[i][j]- g[i+1][j+1]);
        qNE = lut_vector[a];
-       a = fabs(g[i][j]- g[i+1][j  ]);
+       a = (int)fabs(g[i][j]- g[i+1][j  ]);
        qE  = lut_vector[a];
-       a = fabs(g[i][j]- g[i+1][j-1]);
+       a = (int)fabs(g[i][j]- g[i+1][j-1]);
        qSE =  lut_vector[a];
-       a = fabs(g[i][j]- g[i  ][j-1]);
+       a = (int)fabs(g[i][j]- g[i  ][j-1]);
        qS  = lut_vector[a];
-       a = fabs(g[i][j]- g[i-1][j-1]);
+       a = (int)fabs(g[i][j]- g[i-1][j-1]);
        qSW = lut_vector[a];
-       a = fabs(g[i][j]- g[i-1][j  ]);
+       a = (int)fabs(g[i][j]- g[i-1][j  ]);
        qW  = lut_vector[a];
-       a = fabs(g[i][j]- g[i-1][j+1]);
+       a = (int)fabs(g[i][j]- g[i-1][j+1]);
        qNW = lut_vector[a];
        qC  = 1.0 - qN - qNE - qE - qSE - qS - qSW - qW - qNW;
-
-
        /* weighted averaging */
 
        f[i-1][j-1] = qNW * g[i-1][j+1] + qN * g[i][j+1] + qNE * g[i+1][j+1] +
